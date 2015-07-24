@@ -178,7 +178,7 @@ class TaskMixin(models.Model):
         if 'task_id' in kwargs:
             task_id = kwargs['task_id']
         else:
-            task_id = kwargs['task_id'] = uuid()
+            task_id = uuid()
         try:
             taskmeta = ModelTaskMeta.objects.get(task_id=task_id)
             taskmeta.content_object = self
@@ -186,7 +186,7 @@ class TaskMixin(models.Model):
         except ModelTaskMeta.DoesNotExist:
             taskmeta = ModelTaskMeta(task_id=task_id, content_object=self)
         taskmeta.save()
-        return task.apply_async(*args, **kwargs)
+        return task.apply_async(args=args, kwargs=kwargs, task_id=task_id)
 
     def get_task_results(self):
         return map(lambda x: x.result, self.tasks.all())
