@@ -4,13 +4,9 @@ which adds support for tracking Celery tasks assigned to Django model instances.
 
 Installation
 ------------
-Install the latest version from pypi.python.org:
-
-    pip install django-celery-model
-
 Install the development version by cloning the source from github.com:
 
-    pip install git+https://github.com/mback2k/django-celery-model.git
+    pip install git+https://github.com/mbelousov/django-celery-model.git
 
 Configuration
 -------------
@@ -81,6 +77,15 @@ Filter your Django model based upon asynchronous tasks:
     MyModel.objects.without_successful_tasks()
     MyModel.objects.without_running_tasks()
     MyModel.objects.without_ready_tasks()
+    
+To display status in Django admin:
+
+    from django.contrib import admin
+    from djcelery_model.admin import TaskModelAdmin
+    class MyModelAdmin(TaskModelAdmin):
+        pass
+    admin.site.register(MyModel, MyModelAdmin)
+    
 
 License
 -------
