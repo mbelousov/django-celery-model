@@ -83,6 +83,7 @@ class ModelTaskMeta(models.Model):
     task_id = models.CharField(max_length=255, unique=True)
     state = models.PositiveIntegerField(choices=STATES,
                                         default=ModelTaskMetaState.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     objects = ModelTaskMetaManager()
 

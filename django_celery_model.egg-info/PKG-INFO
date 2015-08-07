@@ -7,26 +7,20 @@ Author: Marc Hoersken
 Author-email: info@marc-hoersken.de
 License: MIT
 Description: [django-celery-model](https://github.com/mback2k/django-celery-model) is an
-        extension to [Celery](https://github.com/celery/celery) and
-        [django-celery](https://github.com/celery/django-celery)
+        extension to [Celery](https://github.com/celery/celery)
         which adds support for tracking Celery tasks assigned to Django model instances.
         
         Installation
         ------------
-        Install the latest version from pypi.python.org:
-        
-            pip install django-celery-model
-        
         Install the development version by cloning the source from github.com:
         
-            pip install git+https://github.com/mback2k/django-celery-model.git
+            pip install git+https://github.com/mbelousov/django-celery-model.git
         
         Configuration
         -------------
         Add the package to your `INSTALLED_APPS`:
         
             INSTALLED_APPS += (
-                'djcelery',
                 'djcelery_model',
             )
         
@@ -91,6 +85,15 @@ Description: [django-celery-model](https://github.com/mback2k/django-celery-mode
             MyModel.objects.without_successful_tasks()
             MyModel.objects.without_running_tasks()
             MyModel.objects.without_ready_tasks()
+            
+        To display status in Django admin:
+        
+            from django.contrib import admin
+            from djcelery_model.admin import TaskModelAdmin
+            class MyModelAdmin(TaskModelAdmin):
+                pass
+            admin.site.register(MyModel, MyModelAdmin)
+            
         
         License
         -------

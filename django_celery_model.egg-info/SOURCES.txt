@@ -6,6 +6,7 @@ django_celery_model.egg-info/top_level.txt
 djcelery_model/__init__.py
 djcelery_model/admin.py
 djcelery_model/models.py
+djcelery_model/views.py
 djcelery_model/migrations/0001_initial.py
 djcelery_model/migrations/__init__.py
 djcelery_model/south_migrations/0001_initial.py
