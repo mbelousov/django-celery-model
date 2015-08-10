@@ -4,6 +4,8 @@ import json
 from datetime import datetime
 from django.utils.timezone import utc
 from .models import ModelTaskMetaState
+from celery import states
+from celery.result import AsyncResult
 
 
 class ModelTaskStatusView(BaseDetailView):
@@ -15,8 +17,10 @@ class ModelTaskStatusView(BaseDetailView):
         try:
             for t in self.object.tasks.running():
                 timediff = datetime.utcnow().replace(tzinfo=utc) - t.created_at
-                if timediff.total_seconds() > 30 and t.state == \
-                        ModelTaskMetaState.PENDING:
+                res = AsyncResult(t.task_id)
+                if timediff.total_seconds() > 30 and \
+                        (t.state == ModelTaskMetaState.PENDING or
+                                 res.state == states.PENDING):
                     t.delete()
                     continue
                 response_object['tasks'].append({
