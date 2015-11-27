@@ -15,7 +15,7 @@ class ModelTaskStatusView(BaseDetailView):
             'tasks': [],
         }
         try:
-            task_limit = 10 * 60  # 10 minutes
+            task_limit = 6.5 * 60  # 6.5 minutes
             for t in self.object.tasks.running():
                 timediff = datetime.utcnow().replace(tzinfo=utc) - t.created_at
                 res = AsyncResult(t.task_id)
