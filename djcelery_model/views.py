@@ -15,10 +15,11 @@ class ModelTaskStatusView(BaseDetailView):
             'tasks': [],
         }
         try:
+            task_limit = 10 * 60  # 10 minutes
             for t in self.object.tasks.running():
                 timediff = datetime.utcnow().replace(tzinfo=utc) - t.created_at
                 res = AsyncResult(t.task_id)
-                if timediff.total_seconds() > 30 and \
+                if timediff.total_seconds() > task_limit and \
                         (t.state == ModelTaskMetaState.PENDING or
                                  res.state == states.PENDING):
                     t.delete()
