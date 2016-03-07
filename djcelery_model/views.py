@@ -15,10 +15,18 @@ class ModelTaskStatusView(BaseDetailView):
             'tasks': [],
         }
         try:
-            task_limit = 6.5 * 60  # 6.5 minutes
+            task_limit = 10 * 60  # 10 minutes
             for t in self.object.tasks.running():
                 timediff = datetime.utcnow().replace(tzinfo=utc) - t.created_at
                 res = AsyncResult(t.task_id)
+                try:
+                    res_state = res.state
+                except Exception as e:
+                    print e
+                    print "WRONG STATE"
+                    t.delete()
+                    continue
+
                 if timediff.total_seconds() > task_limit and \
                         (t.state == ModelTaskMetaState.PENDING or
                                  res.state == states.PENDING):
@@ -26,9 +34,10 @@ class ModelTaskStatusView(BaseDetailView):
                     continue
                 response_object['tasks'].append({
                     'task_id': t.task_id,
+                    'task_name': t.task_name,
                     'object_id': t.object_id,
+                    'block_ui': t.block_ui,
                     'created_at': str(t.created_at),
-
                 })
             if len(response_object['tasks']) > 0:
                 response_object['status'] = 'running'
