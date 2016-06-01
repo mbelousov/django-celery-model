@@ -6,12 +6,9 @@ from django.db.models.query import QuerySet
 try:
     # Django >= 1.7
     from django.contrib.contenttypes.fields import GenericForeignKey
-except ImportError:
-    from django.contrib.contenttypes.generic import GenericForeignKey
-try:
-    # Django >= 1.7
     from django.contrib.contenttypes.fields import GenericRelation
 except ImportError:
+    from django.contrib.contenttypes.generic import GenericForeignKey
     from django.contrib.contenttypes.generic import GenericRelation
 
 from django.contrib.contenttypes.models import ContentType
