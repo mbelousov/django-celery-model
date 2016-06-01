@@ -77,10 +77,11 @@ class ModelTaskMeta(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
     task_id = models.CharField(max_length=255, unique=True)
+    task_name = models.CharField(max_length=255, blank=True)
     state = models.PositiveIntegerField(choices=STATES,
                                         default=ModelTaskMetaState.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
-
+    block_ui = models.BooleanField(default=False)
     objects = ModelTaskMetaManager()
 
     def __unicode__(self):
@@ -185,12 +186,16 @@ class TaskMixin(models.Model):
             task_id = kwargs['task_id']
         else:
             task_id = uuid()
+        block_ui = kwargs.get('block_ui', False)
         try:
             taskmeta = ModelTaskMeta.objects.get(task_id=task_id)
             taskmeta.content_object = self
+            taskmeta.block_ui = block_ui
+            taskmeta.task_name = task.name
             forget_if_ready(BaseAsyncResult(task_id))
         except ModelTaskMeta.DoesNotExist:
-            taskmeta = ModelTaskMeta(task_id=task_id, content_object=self)
+            taskmeta = ModelTaskMeta(task_id=task_id, content_object=self,
+                                     block_ui=block_ui, task_name=task.name)
         taskmeta.save()
         return task.apply_async(args=args, kwargs=kwargs, task_id=task_id)
 
