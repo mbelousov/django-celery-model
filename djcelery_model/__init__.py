@@ -10,7 +10,6 @@ __version_info__ = {
     'releaselevel': 'final',
 }
 
-
 def get_version():
     """
     Return the formatted version information
@@ -22,6 +21,5 @@ def get_version():
     if __version_info__['releaselevel'] != 'final':
         vers.append('%(releaselevel)s' % __version_info__)
     return ''.join(vers)
-
 
 __version__ = get_version()

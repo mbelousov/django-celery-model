@@ -1,9 +1,14 @@
 [django-celery-model](https://github.com/mback2k/django-celery-model) is an
-extension to [Celery](https://github.com/celery/celery)
+extension to [Celery](https://github.com/celery/celery) and depending on the
+Celery version [django-celery](https://github.com/celery/django-celery)
 which adds support for tracking Celery tasks assigned to Django model instances.
 
 Installation
 ------------
+Install the latest version from pypi.python.org:
+
+    pip install django-celery-model
+
 Install the development version by cloning the source from github.com:
 
     pip install git+https://github.com/mbelousov/django-celery-model.git
@@ -13,6 +18,7 @@ Configuration
 Add the package to your `INSTALLED_APPS`:
 
     INSTALLED_APPS += (
+        'djcelery',
         'djcelery_model',
     )
 
