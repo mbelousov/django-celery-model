@@ -6,6 +6,9 @@ from django.contrib.contenttypes.models import ContentType
 from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
+from .status import get_worker_status, get_worker_status_display, \
+    WORKER_BUSY, WORKER_ERROR_STATUSES
+from .exceptions import WorkerError
 import logging
 
 try:
@@ -273,7 +276,7 @@ class TaskMixin(models.Model):
                     "Task %s removed: pending for %s" % (t, elapsed))
 
         if self.has_running_task:
-            status = "busy"
+            status = get_worker_status_display(WORKER_BUSY)
             current_task = self.current_running_task
             running_time = datetime.utcnow().replace(tzinfo=timezone.utc) \
                            - current_task.created_at
@@ -285,7 +288,9 @@ class TaskMixin(models.Model):
                 'execution_time': running_time,
             }
         else:
-            status = "ready"
+            worker_status = get_worker_status()
+            status = worker_status['status']
+            status_obj.update(worker_status)
 
         status_obj['status'] = status
         if last_ready_task:
@@ -310,6 +315,11 @@ class TaskMixin(models.Model):
         return status_obj
 
     def apply_async(self, task, *args, **kwargs):
+        status = get_worker_status()
+        if status['status_id'] in WORKER_ERROR_STATUSES:
+            raise WorkerError("Worker status is '%s'. %s" % (
+                status['status'], status.get('status_message', '')
+            ))
         if 'task_id' in kwargs:
             task_id = kwargs['task_id']
         else:
