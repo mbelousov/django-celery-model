@@ -2,12 +2,13 @@
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
 from .status import get_worker_status, get_worker_status_display, \
-    WORKER_BUSY, WORKER_ERROR_STATUSES
+    WORKER_BUSY, WORKER_ERROR_STATUSES, WORKER_READY
 from .exceptions import WorkerError
 import logging
 
@@ -41,16 +42,15 @@ class ModelTaskMetaState(object):
 
 
 class ModelTaskMetaFilterMixin(object):
-    def current_running_task(self):
+    def current_running_tasks(self):
         try:
-            return self.running().latest('pk')
+            return self.running()
         except ModelTaskMeta.DoesNotExist:
             return None
 
     def last_ready_task(self):
         try:
-            return self.ready().latest(
-                'updated_at')
+            return self.ready().order_by('-updated_at', '-created_at').first()
         except ModelTaskMeta.DoesNotExist:
             return None
 
@@ -205,11 +205,11 @@ class TaskMixin(models.Model):
         abstract = True
 
     @property
-    def has_running_task(self):
+    def has_running_tasks(self):
         return self.tasks.running().exists()
 
     @property
-    def has_ready_task(self):
+    def has_ready_tasks(self):
         return self.tasks.ready().exists()
 
     @property
@@ -217,8 +217,8 @@ class TaskMixin(models.Model):
         return self.tasks.last_ready_task()
 
     @property
-    def current_running_task(self):
-        return self.tasks.current_running_task()
+    def current_running_tasks(self):
+        return self.tasks.current_running_tasks()
 
     def get_task_status(self, pending_task_timeout=0,
                         non_block_ui_timeout=0):
@@ -239,8 +239,15 @@ class TaskMixin(models.Model):
         old_ready_tasks = self.tasks.ready()
         if last_ready_task:
             old_ready_tasks = old_ready_tasks.exclude(pk=last_ready_task.pk)
-        rn, _ = old_ready_tasks.delete()
-        removed_n, _ = self.tasks.skipped().delete()
+        res = old_ready_tasks.delete()
+        removed_n = 0
+        rn = 0
+        if res is not None and len(res) == 2:
+            rn, _ = res
+
+        res = self.tasks.skipped().delete()
+        if res is not None and len(res) == 2:
+            removed_n, _ = res
         removed_n += rn
         if removed_n > 0:
             logger.info("%d old tasks removed for %s" % (removed_n, self))
@@ -275,22 +282,26 @@ class TaskMixin(models.Model):
                 logger.warn(
                     "Task %s removed: pending for %s" % (t, elapsed))
 
-        if self.has_running_task:
+        if self.has_running_tasks:
+            status_obj['running_tasks'] = []
             status = get_worker_status_display(WORKER_BUSY)
-            current_task = self.current_running_task
-            running_time = datetime.utcnow().replace(tzinfo=timezone.utc) \
-                           - current_task.created_at
-            status_obj['running_task'] = {
-                'task_id': current_task.task_id,
-                'task_name': current_task.task_name,
-                'state': current_task.get_state_display(),
-                'created_at': current_task.created_at,
-                'execution_time': running_time,
-            }
+            current_tasks = self.current_running_tasks
+            for current_task in current_tasks:
+                running_time = datetime.utcnow().replace(tzinfo=timezone.utc) \
+                               - current_task.created_at
+                status_obj['running_tasks'].append({
+                    'task_id': current_task.task_id,
+                    'task_name': current_task.task_name,
+                    'state': current_task.get_state_display(),
+                    'block_ui': current_task.block_ui,
+                    'created_at': str(current_task.created_at),
+                    'execution_time': running_time.total_seconds(),
+                })
         else:
-            worker_status = get_worker_status()
-            status = worker_status['status']
-            status_obj.update(worker_status)
+            # worker_status = get_worker_status()
+            # status = worker_status['status']
+            # status_obj.update(worker_status)
+            status = get_worker_status_display(WORKER_READY)
 
         status_obj['status'] = status
         if last_ready_task:
@@ -301,22 +312,23 @@ class TaskMixin(models.Model):
                 'task_id': last_ready_task.task_id,
                 'task_name': last_ready_task.task_name,
                 'state': last_ready_task.get_state_display(),
-                'created_at': last_ready_task.created_at,
-                'updated_at': last_ready_task.updated_at,
+                'created_at': str(last_ready_task.created_at),
+                'updated_at': str(last_ready_task.updated_at),
             }
-            status_obj['last_ready_task']['execution_time'] = execution_time
+            status_obj['last_ready_task']['execution_time'] = \
+                execution_time.total_seconds()
 
             if isinstance(last_task_result, Exception):
                 status_obj['last_ready_task']['error_message'] = str(
                     last_task_result)
             else:
-                status_obj['last_ready_task']['result'] = str(
-                    last_task_result)
+                status_obj['last_ready_task']['result'] = last_task_result
+
         return status_obj
 
     def apply_async(self, task, *args, **kwargs):
         status = get_worker_status()
-        if status['status_id'] in WORKER_ERROR_STATUSES:
+        if status['status_code'] in WORKER_ERROR_STATUSES:
             raise WorkerError("Worker status is '%s'. %s" % (
                 status['status'], status.get('status_message', '')
             ))

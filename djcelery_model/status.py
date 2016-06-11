@@ -12,8 +12,8 @@ WORKER_STATUS_CHOICES = (
 WORKER_ERROR_STATUSES = (WORKER_OFFLINE, WORKER_ERROR)
 
 def get_worker_status_display(status):
-    for status_id, status_display in WORKER_STATUS_CHOICES:
-        if status_id == status:
+    for status_code, status_display in WORKER_STATUS_CHOICES:
+        if status_code == status:
             return status_display
     return None
 
@@ -21,9 +21,12 @@ def get_worker_status_display(status):
 def get_worker_status():
     status_message = None
     try:
+        status = WORKER_READY
+
         from celery.task.control import inspect
         insp = inspect()
-        if insp.stats():
+
+        if insp.active():
             status = WORKER_READY
         else:
             status = WORKER_OFFLINE
@@ -39,7 +42,7 @@ def get_worker_status():
         status_message = e.message
 
     d = {
-        'status_id': status,
+        'status_code': status,
         'status': get_worker_status_display(status)
     }
     if status_message:
