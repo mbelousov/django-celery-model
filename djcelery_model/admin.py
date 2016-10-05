@@ -6,6 +6,6 @@ class TaskModelAdmin(admin.ModelAdmin):
         return self.list_display + ('task_status',)
 
     def task_status(self, instance):
-        if instance.has_running_task:
+        if instance.has_running_tasks:
             return "Running"
         return "Ready"
