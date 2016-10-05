@@ -6,10 +6,9 @@ support for tracking Celery tasks assigned to Django model instances.
 __version_info__ = {
     'major': 0,
     'minor': 2,
-    'micro': 2,
+    'micro': 3,
     'releaselevel': 'final',
 }
-
 
 def get_version():
     """
@@ -23,5 +22,5 @@ def get_version():
         vers.append('%(releaselevel)s' % __version_info__)
     return ''.join(vers)
 
-
 __version__ = get_version()
+

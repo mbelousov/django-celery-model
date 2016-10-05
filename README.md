@@ -1,9 +1,14 @@
 [django-celery-model](https://github.com/mback2k/django-celery-model) is an
-extension to [Celery](https://github.com/celery/celery)
+extension to [Celery](https://github.com/celery/celery) and depending on the
+Celery version [django-celery](https://github.com/celery/django-celery)
 which adds support for tracking Celery tasks assigned to Django model instances.
 
 Installation
 ------------
+Install the latest version from pypi.python.org:
+
+    pip install django-celery-model
+
 Install the development version by cloning the source from github.com:
 
     pip install git+https://github.com/mbelousov/django-celery-model.git
@@ -13,6 +18,7 @@ Configuration
 Add the package to your `INSTALLED_APPS`:
 
     INSTALLED_APPS += (
+        'djcelery',
         'djcelery_model',
     )
 
@@ -48,8 +54,8 @@ Retrieve list of asynchronous tasks assigned to your Django model instance:
 
 Check for a running or ready asynchronous task for your Django model instance:
 
-    mymodel.has_running_task
-    mymodel.has_ready_task
+    mymodel.has_running_tasks
+    mymodel.has_ready_tasks
 
 Handle asynchronous task results for your Django model instance:
 

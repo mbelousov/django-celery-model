@@ -1,3 +1,4 @@
 django_celery_model.egg-info/
 .idea/
 *.pyc
+.DS_Store
